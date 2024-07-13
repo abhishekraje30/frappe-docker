@@ -19,22 +19,34 @@ RUN apt update && \
     mariadb-client \
     xvfb \
     libfontconfig \
+    cron \
+    nginx \
     && apt clean
 
-# Install nvm, Node.js 18, npm, and Yarn
-ENV NVM_DIR=/root/.nvm
+# Create a non-root user
+RUN useradd -ms /bin/bash appuser
+
+# Switch to the non-root user
+USER appuser
+
+# Set up the home directory for appuser
+WORKDIR /home/appuser
+
+# Install nvm, Node.js 18, npm, and Yarn for appuser
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
-    . "$NVM_DIR/nvm.sh" && \
+    export NVM_DIR="/home/appuser/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     nvm install 18 && \
     nvm use 18 && \
     npm install -g npm@latest yarn
 
-# Add these environment variables to ensure nvm works correctly
-ENV NODE_VERSION=18
-RUN echo "source $NVM_DIR/nvm.sh && nvm use $NODE_VERSION" >> /root/.bashrc
+# Add nvm and node to PATH for appuser
+RUN echo 'export NVM_DIR="$HOME/.nvm"' >> /home/appuser/.bashrc && \
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/appuser/.bashrc && \
+    echo 'nvm use 18' >> /home/appuser/.bashrc
 
 # Create a directory for the virtual environment
-WORKDIR /app
+WORKDIR /home/appuser/app
 
 # Create a virtual environment
 RUN python3 -m venv venv
