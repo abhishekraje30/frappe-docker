@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:24.10
 
 # Set environment variables
 ENV LANG=C.UTF-8 \
@@ -53,6 +53,8 @@ RUN python3 -m venv venv
 
 # Activate the virtual environment and install frappe-bench
 RUN /bin/bash -c "source venv/bin/activate && pip install frappe-bench"
+
+EXPOSE 8000
 
 # Set the entrypoint to use the virtual environment
 ENTRYPOINT ["/bin/bash", "-c", "source venv/bin/activate && exec \"$@\"", "--"]
