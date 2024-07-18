@@ -23,8 +23,11 @@ RUN apt update && \
     nginx \
     && apt clean
 
-# Create a non-root user
-RUN useradd -ms /bin/bash appuser
+# Create new user with home directory, improve Docker compatibility with UID/GID 1001,
+# add user to sudo group, allow passwordless sudo, switch to that user
+RUN useradd --no-log-init -r -m -u 1001 -g sudo -G sudo appuser \
+    && echo "appuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
 
 # Switch to the non-root user
 USER appuser
@@ -54,7 +57,7 @@ RUN python3 -m venv venv
 # Activate the virtual environment and install frappe-bench
 RUN /bin/bash -c "source venv/bin/activate && pip install frappe-bench"
 
-EXPOSE 8000
+EXPOSE 8000-8005 9000-9005 6787
 
 # Set the entrypoint to use the virtual environment
 ENTRYPOINT ["/bin/bash", "-c", "source venv/bin/activate && exec \"$@\"", "--"]
